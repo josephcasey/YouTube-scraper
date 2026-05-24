@@ -1,0 +1,21 @@
+[project]
+name = "youtube-transcript-mcp"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp[cli]>=1.0.0",
+    "yt-dlp>=2024.1.1",
+    "youtube-transcript-api>=1.0.0",
+    "requests>=2.28.0",
+]
+
+[project.scripts]
+youtube-transcript-mcp = "mcp_server.server:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mcp_server*"]
+
+[build-system]
+requires = ["setuptools>=42"]
+build-backend = "setuptools.build_meta"
