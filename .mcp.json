@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "youtube-transcript": {
+      "command": "python3",
+      "args": ["-m", "mcp_server.server"],
+      "cwd": "/home/user/YouTube-scraper",
+      "env": {
+        "YOUTUBE_PROXY_URL": "https://josephs-macbook-air-2.tail4adb5a.ts.net",
+        "YOUTUBE_PROXY_TOKEN": "7TzcnsYEdnjJReps7q2eivlNuAQ-VpM9pASbXAEccHat0sF7glUorUe3HMVzlanZ"
+      }
+    }
+  }
+}
