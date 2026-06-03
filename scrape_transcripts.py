@@ -23,10 +23,20 @@ from youtube_transcript_api import YouTubeTranscriptApi, NoTranscriptFound, Tran
 # The sandbox environment uses a self-signed proxy certificate; disable SSL verification globally.
 ssl._create_default_https_context = ssl._create_unverified_context
 
+_PROXY_URL = os.environ.get("YOUTUBE_PROXY_URL", "").rstrip("/")
+_PROXY_TOKEN = os.environ.get("YOUTUBE_PROXY_TOKEN", "")
+
+
 def _make_http_client() -> requests.Session:
-    """Return a requests Session with SSL verification disabled for the sandbox proxy."""
     session = requests.Session()
     session.verify = False
+    return session
+
+
+def _proxy_session() -> requests.Session:
+    session = requests.Session()
+    session.verify = False
+    session.headers["Authorization"] = f"Bearer {_PROXY_TOKEN}"
     return session
 
 PLAYLIST_URL = "https://www.youtube.com/playlist?list=PLm0MDLKuRDrmX27Fs1LOK07c_uRbzV5Oh"
@@ -41,6 +51,11 @@ def safe_filename(title: str) -> str:
 
 def fetch_playlist_videos(playlist_url: str) -> list[dict]:
     """Return a list of {id, title, url} dicts for all videos in the playlist."""
+    if _PROXY_URL and _PROXY_TOKEN:
+        resp = _proxy_session().get(f"{_PROXY_URL}/playlist", params={"url": playlist_url})
+        resp.raise_for_status()
+        return resp.json()["videos"]
+
     ydl_opts = {
         "quiet": True,
         "extract_flat": "in_playlist",
@@ -67,6 +82,24 @@ def fetch_transcript(video_id: str) -> list[dict] | None:
     Tries English first, then any available language.
     Returns a list of {text, start, duration} dicts, or None on failure.
     """
+    if _PROXY_URL and _PROXY_TOKEN:
+        session = _proxy_session()
+        resp = session.get(
+            f"{_PROXY_URL}/transcript",
+            params={"video": video_id, "language": "en"},
+        )
+        if resp.ok:
+            data = resp.json()
+            if "segments" in data:
+                return data["segments"]
+        # Fallback: let proxy pick any available language
+        resp = session.get(f"{_PROXY_URL}/transcript", params={"video": video_id})
+        if resp.ok:
+            data = resp.json()
+            if "segments" in data:
+                return data["segments"]
+        return None
+
     try:
         api = YouTubeTranscriptApi(http_client=_make_http_client())
         transcript_list = api.list(video_id)
