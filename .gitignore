@@ -1,3 +1,8 @@
 __pycache__
 *.egg-info
 *.pyc
+
+# Secrets — never commit the bearer token
+mac_service/.token
+*.token
+.env
